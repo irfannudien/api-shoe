@@ -26,11 +26,17 @@ app.use(urlLogger);
 app.use(express.static("./public"));
 
 // CONFIG API ROUTER
-const { userRouter, cartRouter, productRouter } = require("./router");
+const {
+  userRouter,
+  cartRouter,
+  productRouter,
+  rajaOngkirRouter,
+} = require("./router");
 
 app.use("/api", userRouter);
 app.use("/api", cartRouter);
 app.use("/api", productRouter);
+app.use("/api", rajaOngkirRouter);
 
 app.get("/", (req, res) => {
   res
