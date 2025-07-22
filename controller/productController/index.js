@@ -10,52 +10,140 @@ function generateSlug(name) {
 }
 
 module.exports = {
-  insertProduct: async (req, res) => {
+  addProduct: async (req, res) => {
     const date = new Date();
-    const { product, images, sizes, seo } = req.body;
+    const { product, new_category, images, sizes, seo } = req.body;
 
     // ========= BODY VALIDATION =========
     if (!product || !images || !sizes || !seo) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    if (!Array.isArray(images) || images.length === 0) {
+    if (
+      !product.product_name ||
+      !product.price ||
+      !product.description ||
+      !product.brand ||
+      !product.category == null ||
+      !product.weight
+    ) {
       return res
         .status(400)
-        .json({ message: "Minimum 1 image is required for the product." });
+        .json({ message: "All product fields must be filled" });
+    }
+
+    if (!Array.isArray(images) || images.length === 0) {
+      return res.status(400).json({ message: "At least 1 image is required" });
+    }
+
+    if (!Array.isArray(sizes) || sizes.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "At least 1 size with stock is required" });
     }
 
     try {
-      console.log("YOUR INSERT PRODUCT");
       console.log("PRODUCT DATA", product);
       console.log("IMAGES DATA", images);
       console.log("SIZES DATA", sizes);
       console.log("SEO DATA", seo);
-
-      // ========= CATEGORY CHECK =========
-      // ========= GET CATEGORY LABEL =========
-      const getCategoryLabel = `
-      SELECT category FROM product_category
-      WHERE id = ?`;
-      const categoryResult = await runQuery(getCategoryLabel, [
-        product.category,
-      ]);
-      console.log("PRODUCT CATEGORY: ", categoryResult);
-
-      if (categoryResult.length === 0) {
-        return res.status(400).json({ message: "Invalid Category ID" });
-      }
-
-      const categoryLabel = categoryResult[0].category;
-      console.log("CATEGORY LABEL: ", categoryLabel);
+      console.log("NEW CATEGORY", new_category);
 
       // ========= START TRANSACTION =========
       await runQuery("START TRANSACTION");
 
-      const featuredImage = product.featured_image || images[0];
-      const slug = generateSlug(product.product_name);
+      // ========= CATEGORY VALIDATION =========
+      let categoryLabel;
+
+      if (
+        new_category &&
+        typeof new_category === "object" &&
+        typeof new_category.category === "string" &&
+        new_category.category.trim()
+      ) {
+        const newCategory = new_category.category.trim();
+
+        const isInvalidCategory =
+          newCategory.length < 2 ||
+          newCategory.length > 10 ||
+          ["null", "undefined", "none", "invalid"].includes(
+            newCategory.toLowerCase()
+          ) ||
+          /^[0-9]+$/.test(newCategory) ||
+          !/^[a-zA-Z\s\-&()]+$/.test(newCategory);
+
+        if (isInvalidCategory) {
+          return res.status(400).json({ message: "Invalid new category name" });
+        }
+
+        const checkCategory = `
+        SELECT id FROM product_category
+        WHERE category = ?`;
+        const existingCategory = await runQuery(checkCategory, [newCategory]);
+
+        if (existingCategory.length > 0) {
+          return res.status(400).json({ message: "Category already exist" });
+        }
+
+        const insertProductCategory = `
+        INSERT INTO product_category (category, description, slug, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?)`;
+        const valueCategory = [
+          newCategory,
+          newCategory.description || null,
+          newCategory.slug || generateSlug(newCategory),
+          date,
+          date,
+        ];
+        await runQuery(insertProductCategory, valueCategory);
+
+        console.log("CREATE NEW CATEGORY: ", newCategory);
+
+        categoryLabel = newCategory;
+      } else if (product.category) {
+        const inputCategory = String(product.category).trim();
+
+        const isNotNumber = isNaN(Number(inputCategory));
+
+        if (isNotNumber) {
+          const checkCategoryByName = `
+          SELECT category FROM product_category
+          WHERE category = ?`;
+          const categoryNameExist = await runQuery(
+            checkCategoryByName,
+            inputCategory
+          );
+
+          if (categoryNameExist === 0) {
+            return res.status(400).json({ message: "Category name not found" });
+          }
+          console.log("EXISTING CATEGORY BY NAME:", inputCategory);
+
+          categoryLabel = inputCategory;
+        } else {
+          const categoryId = Number(inputCategory);
+          const checkCategoryById = `SELECT category FROM product_category
+          WHERE id = ?`;
+          const categoryIdExist = await runQuery(checkCategoryById, [
+            categoryId,
+          ]);
+
+          if (categoryIdExist.length === 0) {
+            return res.status(400).json({ message: "Category ID not found" });
+          }
+
+          console.log("EXISTING CATEGORY BY ID: ", categoryIdExist);
+          categoryLabel = categoryIdExist[0].category;
+        }
+      } else {
+        return res.status(400).json({ message: "Category is required" });
+      }
+
+      // ========= PRODUCT VALIDATION =========
       const productName = product.product_name.trim();
       const productPrice = parseInt(product.price);
+      const slug = generateSlug(product.product_name);
+      const featuredImage = product.featured_image || images[0];
 
       if (isNaN(productPrice) || productPrice <= 0) {
         return res
@@ -73,20 +161,21 @@ module.exports = {
 
       console.log("EXISTING PRODUCT: ", existingProduct);
       if (existingProduct.length > 0) {
-        return res.status(400).json({ message: "Product already exists" });
+        return res.status(400).json({ message: "Product already exist" });
       }
 
       // ========= INSERT NEW PRODUCT =========
       const insertNewProduct = `
       INSERT INTO product
       (product_name, price, description, brand, category, weight, featured_image, slug, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
       const productValues = [
         productName,
         productPrice,
         product.description,
         product.brand,
-        product.category,
+        categoryLabel,
         product.weight,
         featuredImage,
         slug,
@@ -95,66 +184,25 @@ module.exports = {
       ];
 
       const productResult = await runQuery(insertNewProduct, productValues);
-      console.log("PRODUCT RESULT: ", productResult);
+      console.log("NEW PRODUCT RESULT: ", productResult);
       const productId = productResult.insertId;
-      console.log("PRODUCT INSERTED ID:", productId);
+      console.log("NEW PRODUCT ID: ", productId);
 
       // ========= INSERT PRODUCT IMAGE =========
-      const insertImage = `
+      const insertProductImage = `
       INSERT INTO product_img
-      (product_id, assets, created_at)
-      VALUES (?, ?, ?)`;
-      const imageResult = images.map((img) =>
-        runQuery(insertImage, [productId, img, date])
-      );
-      await Promise.all(imageResult);
-      console.log(`IMAGES RESULT: `, imageResult);
+      (product_id, assets, created_at, updated_at)
+      VALUES (?, ?, ?, ?)`;
 
-      // ========= INSERT PRODUCT STOCK and SIZE =========
-      const insertStock = `
-      INSERT INTO product_stock
-      (product_id, size_id, stock, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?)`;
-      const stockResult = sizes.map(({ size_id, stock }) => {
-        const stockValues = [productId, size_id, stock, date, date];
-        runQuery(insertStock, stockValues);
+      const imageResult = images.map((img) => {
+        const imgValues = [productId, img, date, date];
+        return runQuery(insertProductImage, imgValues);
       });
-      await Promise.all(stockResult);
-      console.log(`STOCK INSERT: `, stockResult);
-
-      // ========= INSERT PRODUCT SEO =========
-      const insertProductSeo = `
-      INSERT INTO product_seo
-      (product_id, product_title, meta_title, meta_keyword, meta_description, meta_image, meta_image_alt, meta_author, meta_type, meta_url, page_favicon, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-      const seoValues = [
-        productId,
-        seo.product.title,
-        seo.meta_title,
-        seo.meta_keyword,
-        seo.meta_description,
-        seo.meta_image,
-        seo.meta_image_alt,
-        seo.meta_author,
-        seo.meta_type,
-        seo.meta_url,
-        seo.page_favicon,
-        date,
-        date,
-      ];
-
-      const insertSeoResult = await runQuery(insertProductSeo, seoValues);
-      console.log("PRODUCT SEO INSERT: ", insertSeoResult);
-
-      // ========= FINISH TRANSACTION =========
-      await runQuery("COMMIT");
-
-      console.log("INSERT NEW PRODUCT SUCCESS");
-      res.status(201).json({ message: "Insert new product success" });
+      await Promise.all(imageResult);
+      console.log("IMAGES RESULT: ", imageResult);
     } catch (err) {
-      await runQuery("ROLLBACK");
-      console.error("INSERT FAILED:", err);
-      res.status(500).json({ message: "Insert failed" });
+      console.log("ERROR MESSAGE: ", err);
+      res.status(500).json({ message: "Internal server error" });
     }
   },
 
