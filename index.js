@@ -31,12 +31,14 @@ const {
   cartRouter,
   productRouter,
   rajaOngkirRouter,
+  newsRouter,
 } = require("./router");
 
 app.use("/api", userRouter);
 app.use("/api", cartRouter);
 app.use("/api", productRouter);
 app.use("/api", rajaOngkirRouter);
+app.use("/api", newsRouter);
 
 app.get("/", (req, res) => {
   res
