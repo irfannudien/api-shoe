@@ -18,6 +18,33 @@ module.exports = {
       profile_picture,
     } = req.body;
 
+    // ========= EMAIL VALIDATION =========
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    // ========= PASSWORD VALIDATION =========
+    if (password.length < 6 || password.length > 32) {
+      return res
+        .status(400)
+        .json({ message: "Password must be 6-32 characters" });
+    }
+
+    // ========= CHECK EXISTING EMAIL =========
+    const checkEmail = `SELECT id FROM users WHERE email = ?`;
+    const emailExist = await runQuery(checkEmail, [email]);
+    if (emailExist.length > 0) {
+      return res.status(400).json({ message: "Email already registered" });
+    }
+
+    // ========= PHONE NUMBER VALIDATION =========
+    if (phone_number && !/^\d{8,15}$/.test(phone_number)) {
+      return res
+        .status(400)
+        .json({ message: "Phone number must be 8-15 digits" });
+    }
+
     try {
       // ======= INSERT USER =======
       const insertUser = `

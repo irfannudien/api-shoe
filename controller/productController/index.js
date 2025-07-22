@@ -83,7 +83,6 @@ module.exports = {
       console.log("SEO DATA", category_seo);
       console.log("NEW CATEGORY", new_category);
 
-      // ========= START TRANSACTION =========
       await runQuery("START TRANSACTION");
 
       // ========= CATEGORY VALIDATION =========
@@ -270,7 +269,6 @@ module.exports = {
       console.log("IMAGES RESULT: ", imageResult);
 
       // ========= INSERT PRODUCT SIZE and STOCK =========
-
       const insertProductSize = `
       INSERT INTO product_stock
       (product_id, size_id, stock, created_at, updated_at)
@@ -309,7 +307,6 @@ module.exports = {
       );
       console.log("PRODUCT SEO INSERT: ", insertSeoResult);
 
-      // ========= FINISH TRANSACTION =========
       await runQuery("COMMIT");
 
       console.log("INSERT NEW PRODUCT SUCCESS");
@@ -342,7 +339,6 @@ module.exports = {
 
       const productName = productResult[0].product_name;
 
-      // ========= START TRANSACTION =========
       await runQuery("START TRANSACTION");
 
       await runQuery(`DELETE FROM product_seo WHERE product_id = ?`, [id]);
@@ -350,7 +346,6 @@ module.exports = {
       await runQuery(`DELETE FROM product_img WHERE product_id = ?`, [id]);
       await runQuery(`DELETE FROM product WHERE id = ?`, [id]);
 
-      // ========= FINISH TRANSACTION =========
       await runQuery("COMMIT");
 
       res

@@ -33,10 +33,29 @@ module.exports = {
 
   addItemToCart: async (req, res) => {
     const date = new Date();
-    const { users_id, product_id, size_id, quantity } = req.body;
+    let { users_id, product_id, size_id, quantity } = req.body;
+    quantity = parseInt(quantity);
 
-    if (!users_id || !product_id || !size_id || !quantity) {
+    if (!users_id || !product_id || !size_id || quantity == null) {
       return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (!Number.isInteger(users_id) || users_id <= 0) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+
+    if (!Number.isInteger(product_id) || product_id <= 0) {
+      return res.status(400).json({ message: "Invalid product ID" });
+    }
+
+    if (!Number.isInteger(size_id) || size_id <= 0) {
+      return res.status(400).json({ message: "Invalid size ID" });
+    }
+
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      return res
+        .status(400)
+        .json({ message: "Quantity must be a number greater than 0" });
     }
 
     try {
@@ -149,11 +168,20 @@ module.exports = {
     const date = new Date();
     let { cart_item_id, size_id, quantity } = req.body;
     quantity = parseInt(quantity);
+
     if (!cart_item_id || !size_id || quantity == null) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    if (isNaN(quantity) || quantity <= 0) {
+    if (!Number.isInteger(cart_item_id) || cart_item_id <= 0) {
+      return res.status(400).json({ message: "Invalid cart item ID" });
+    }
+
+    if (!Number.isInteger(size_id) || size_id <= 0) {
+      return res.status(400).json({ message: "Invalid size ID" });
+    }
+
+    if (!Number.isInteger(quantity) || quantity <= 0) {
       return res
         .status(400)
         .json({ message: "Quantity must be a number greater than 0" });
