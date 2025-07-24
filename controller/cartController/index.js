@@ -40,19 +40,19 @@ module.exports = {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    if (!Number.isInteger(users_id) || users_id <= 0) {
+    if (isNaN(users_id) || users_id <= 0) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
 
-    if (!Number.isInteger(product_id) || product_id <= 0) {
+    if (isNaN(product_id) || product_id <= 0) {
       return res.status(400).json({ message: "Invalid product ID" });
     }
 
-    if (!Number.isInteger(size_id) || size_id <= 0) {
+    if (isNaN(size_id) || size_id <= 0) {
       return res.status(400).json({ message: "Invalid size ID" });
     }
 
-    if (!Number.isInteger(quantity) || quantity <= 0) {
+    if (isNaN(quantity) || quantity <= 0) {
       return res
         .status(400)
         .json({ message: "Quantity must be a number greater than 0" });
@@ -149,13 +149,13 @@ module.exports = {
       console.log("RESULT ITEM DATA: ", insertItemResult);
 
       // ========= UPDATE STOCK DATA =========
-      const updateStock = `
-      UPDATE product_stock SET stock = stock - ? WHERE id = ?`;
-      const resultStock = await runQuery(updateStock, [
-        quantity,
-        stockProduct.id,
-      ]);
-      console.log("RESULT UPDATE STOCK", resultStock);
+      // const updateStock = `
+      // UPDATE product_stock SET stock = stock - ? WHERE id = ?`;
+      // const resultStock = await runQuery(updateStock, [
+      //   quantity,
+      //   stockProduct.id,
+      // ]);
+      // console.log("RESULT UPDATE STOCK", resultStock);
 
       res.status(201).json({ message: "Add item to cart success" });
     } catch (err) {
