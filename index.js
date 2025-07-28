@@ -32,6 +32,8 @@ const {
   productRouter,
   rajaOngkirRouter,
   newsRouter,
+
+  newsletterRouter,
 } = require("./router");
 
 app.use("/api", userRouter);
@@ -39,6 +41,7 @@ app.use("/api", cartRouter);
 app.use("/api", productRouter);
 app.use("/api", rajaOngkirRouter);
 app.use("/api", newsRouter);
+app.use("/api", newsletterRouter);
 
 app.get("/", (req, res) => {
   res
