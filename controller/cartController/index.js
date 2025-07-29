@@ -84,6 +84,12 @@ module.exports = {
       const product = productData[0];
       console.log("PRODUCT", product);
 
+      // ========= GET META_URL FROM PAGE_SEO =========
+      const getSeoUrl = `
+      SELECT meta_url FROM product_seo WHERE product_id = ?`;
+      const seoData = await runQuery(getSeoUrl, [product.id]);
+      const metaUrl = seoData.length > 0 ? seoData[0].meta_url : null;
+
       // ========= GET SIZE =========
       const getSize = `
       SELECT * FROM product_size WHERE id = ?`;
@@ -140,7 +146,7 @@ module.exports = {
         quantity,
         totalWeight,
         totalPrice,
-        product.featured_image,
+        metaUrl,
         date,
         date,
       ];

@@ -115,7 +115,7 @@ module.exports = {
               <p style="font-size:16px;">
                 To complete your registration, please verify your email address by clicking the button below:
               </p>
-              <a href="http://localhost:2000/api/user/verify?email=${email}" 
+              <a href="http://localhost:2000/api/user/verify-email?email=${email}" 
                 style="display:inline-block; margin-top:15px; padding:12px 24px; background-color:#28a745; color:#fff; text-decoration:none; border-radius:5px; font-size:16px;">
                 Verify My Account
               </a>
@@ -299,7 +299,7 @@ module.exports = {
 
       // ========= SEND TO EMAIL =========
       const mailToUser = {
-        from: "KC Shoeshop <noreply@kcshoeshop.com>",
+        from: "KC Shoeshop <ridho@coursenese.com>",
         to: email,
         subject: "Reset Your Password - KC Shoeshop",
         html: `
@@ -364,8 +364,7 @@ module.exports = {
 
       // ========= UPDATE NEW PASSWORD =========
       const updatePassword = `
-      UPDATE users SET password = ? WHERE email = ?
-    `;
+      UPDATE users SET password = ? WHERE email = ?`;
       await runQuery(updatePassword, [hashedPassword, email]);
 
       res

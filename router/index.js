@@ -3,8 +3,8 @@ const cartRouter = require("./cartRouter");
 const productRouter = require("./productRouter");
 const rajaOngkirRouter = require("./rajaOngkirRouter");
 const newsRouter = require("./newsRouter");
-
 const newsletterRouter = require("./newsletterRouter");
+const checkoutRouter = require("./checkoutRouter");
 
 module.exports = {
   userRouter,
@@ -12,6 +12,6 @@ module.exports = {
   productRouter,
   rajaOngkirRouter,
   newsRouter,
-
   newsletterRouter,
+  checkoutRouter,
 };
