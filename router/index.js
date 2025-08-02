@@ -7,6 +7,7 @@ const newsletterRouter = require("./newsletterRouter");
 const checkoutRouter = require("./checkoutRouter");
 const profileRouter = require("./profileRouter");
 const midtransRouter = require("./midtransRouter");
+const carouselRouter = require("./carouselRouter");
 
 module.exports = {
   userRouter,
@@ -18,4 +19,5 @@ module.exports = {
   checkoutRouter,
   profileRouter,
   midtransRouter,
+  carouselRouter,
 };

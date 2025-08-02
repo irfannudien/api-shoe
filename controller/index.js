@@ -7,6 +7,7 @@ const newsLetterController = require("./newsLetterController");
 const checkoutController = require("./checkoutController");
 const profileController = require("./profileController");
 const midtransController = require("./midtransController");
+const carouselController = require("./carouselController");
 
 module.exports = {
   userController,
@@ -18,4 +19,5 @@ module.exports = {
   checkoutController,
   profileController,
   midtransController,
+  carouselController,
 };

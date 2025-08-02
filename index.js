@@ -36,6 +36,7 @@ const {
   checkoutRouter,
   profileRouter,
   midtransRouter,
+  carouselRouter,
 } = require("./router");
 
 app.use("/api", userRouter);
@@ -47,6 +48,7 @@ app.use("/api", newsletterRouter);
 app.use("/api", checkoutRouter);
 app.use("/api", profileRouter);
 app.use("/api", midtransRouter);
+app.use("/api", carouselRouter);
 
 app.get("/", (req, res) => {
   res

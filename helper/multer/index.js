@@ -1,10 +1,16 @@
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 
 module.exports.upload = (folder) => {
   // CONFIG SAVE FILE
   const storage = multer.diskStorage({
-    destination: folder,
+    // destination: folder,
+    destination: (req, file, cb) => {
+      const dir = `./public/${folder}`;
+      fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
     filename: (req, file, cb) => {
       // FILE NAME: IMG-timeStamp.ext
       console.log("MULTER IS RUNNING");
