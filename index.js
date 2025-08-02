@@ -34,6 +34,8 @@ const {
   newsRouter,
   newsletterRouter,
   checkoutRouter,
+  profileRouter,
+  midtransRouter,
 } = require("./router");
 
 app.use("/api", userRouter);
@@ -43,6 +45,8 @@ app.use("/api", rajaOngkirRouter);
 app.use("/api", newsRouter);
 app.use("/api", newsletterRouter);
 app.use("/api", checkoutRouter);
+app.use("/api", profileRouter);
+app.use("/api", midtransRouter);
 
 app.get("/", (req, res) => {
   res

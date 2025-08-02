@@ -1,4 +1,6 @@
+const { createTransaction } = require("../../helper/midtrans");
 const { runQuery } = require("../../utils");
+const midtransClient = require("midtrans-client");
 
 module.exports = {
   checkoutOrder: async (req, res) => {
@@ -40,6 +42,7 @@ module.exports = {
         WHERE ci.cart_id = ?
       `;
       const cartItems = await runQuery(cartItemsQuery, [cartId]);
+      console.log("CART ITEMS: ", cartItems);
 
       if (cartItems.length === 0) {
         return res.status(400).json({ message: "Cart is empty" });
@@ -97,6 +100,8 @@ module.exports = {
       `;
 
       const userResult = await runQuery(userProfileQuery, [users_id]);
+
+      console.log("USER RESULT: ", userResult);
       const user = userResult[0];
 
       if (!user) {
@@ -111,10 +116,10 @@ module.exports = {
 
       // ========= TOTAL AMOUNT =========
       const totalProductAmount = cartItems.reduce(
-        (sum, item) => sum + item.total,
+        (sum, item) => sum + item.price * item.quantity,
         0
       );
-      const total_amount = totalProductAmount + shipping_cost;
+      const total_amount = totalProductAmount + Number(shipping_cost);
 
       // ========= INSERT INTO ORDERS =========
       const insertOrder = `
@@ -143,6 +148,7 @@ module.exports = {
       ];
 
       const orderResult = await runQuery(insertOrder, orderValues);
+      console.log("ORDER RESULT", orderResult);
       const order_id = orderResult.insertId;
 
       // ========= INSERT ORDER ITEMS & UPDATE STOCK =========
@@ -188,26 +194,81 @@ module.exports = {
       // ========= DELETE CART ITEM =========
       await runQuery("DELETE FROM cart_item WHERE cart_id = ?", [cartId]);
 
+      // ========= MIDTRANS TRANSACTION =========
+      // let snap = new midtransClient.Snap({
+      //   isProduction: false,
+      //   serverKey: process.env.MIDTRANS_SERVER_KEY,
+      //   clientKey: process.env.MIDTRANS_CLIENT_KEY,
+      // });
+
+      // let parameter = {
+      //   transaction_details: {
+      //     order_id: `ORDER-${order_id}`,
+      //     gross_amount: total_amount,
+      //   },
+      //   credit_card: {
+      //     secure: true,
+      //   },
+      //   customer_details: {
+      //     first_name: user.name,
+      //     email: user.email,
+      //     phone: user.phone_number || null,
+      //     billing_address: {
+      //       address: user.address,
+      //     },
+      //   },
+      //   item_details: [
+      //     ...cartItems.map((item) => ({
+      //       id: item.product_id,
+      //       name: item.product_name,
+      //       price: Number(item.price),
+      //       quantity: item.quantity,
+      //     })),
+      //     {
+      //       id: "shipping",
+      //       name: "Shipping Cost",
+      //       price: Number(shipping_cost),
+      //       quantity: 1,
+      //     },
+      //   ],
+      // };
+
+      // const midtransResponse = await snap.createTransaction(parameter);
+
+      const midtransResponse = await createTransaction({
+        order_id,
+        cartItems,
+        shipping_cost,
+        user,
+      });
+
       // ========= INSERT TRANSACTIONS =========
       const insertTransaction = `
-        INSERT INTO transactions 
+        INSERT INTO transactions
         (order_id, payment_gateway, payment_method, payment_type, amount, status, transaction_id, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
-      await runQuery(insertTransaction, [
+
+      const transactionsValue = [
         order_id,
         payment_gateway,
         null,
         null,
         total_amount,
         "Payment Pending",
-        null,
+        `ORDER-${order_id}`,
         date,
         date,
-      ]);
+      ];
+
+      await runQuery(insertTransaction, transactionsValue);
 
       await runQuery("COMMIT");
-      res.status(200).json({ message: "Checkout success", order_id });
+      res.status(200).json({
+        message: "Checkout success",
+        order_id,
+        snap_url: midtransResponse.redirect_url,
+      });
     } catch (error) {
       await runQuery("ROLLBACK");
       console.error("Checkout Error:", error);
