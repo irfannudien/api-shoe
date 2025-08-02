@@ -121,8 +121,10 @@ module.exports = {
       // DELETE PREV FILE IF EXIST
       if (resultSelect[0] && resultSelect[0].profile_picture) {
         const oldImagePath = path.join(
-          __dirname,
-          "../public",
+          // __dirname,
+          // "../public",
+          process.cwd(),
+          "public",
           resultSelect[0].profile_picture
         );
         fs.unlink(oldImagePath, (errUnlink) => {

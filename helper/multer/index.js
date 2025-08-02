@@ -7,6 +7,7 @@ module.exports.upload = (folder) => {
     destination: folder,
     filename: (req, file, cb) => {
       // FILE NAME: IMG-timeStamp.ext
+      console.log("MULTER IS RUNNING");
       cb(
         null,
         file.fieldname + "-" + Date.now() + path.extname(file.originalname)
