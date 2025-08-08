@@ -9,12 +9,28 @@ let snap = new midtransClient.Snap({
 const createTransaction = async ({
   order_id,
   cartItems,
-  shipping_cost,
+  shippingCost,
   user,
 }) => {
-  const total_amount =
-    cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0) +
-    Number(shipping_cost);
+  const items = [
+    ...cartItems.map((item) => ({
+      id: item.product_id,
+      name: item.product_name,
+      price: Number(item.price),
+      quantity: item.quantity,
+    })),
+    {
+      id: "shc",
+      name: "Shipping Cost",
+      price: Number(shippingCost?.cost),
+      quantity: 1,
+    },
+  ];
+
+  const total_amount = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   let parameter = {
     transaction_details: {
@@ -38,20 +54,7 @@ const createTransaction = async ({
         address: user.address,
       },
     },
-    item_details: [
-      ...cartItems.map((item) => ({
-        id: item.product_id,
-        name: item.product_name,
-        price: Number(item.price),
-        quantity: item.quantity,
-      })),
-      {
-        id: "shc",
-        name: "Shipping Cost",
-        price: Number(shipping_cost),
-        quantity: 1,
-      },
-    ],
+    item_details: items,
   };
 
   return snap.createTransaction(parameter);

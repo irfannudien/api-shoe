@@ -10,6 +10,7 @@ module.exports = {
         }
       );
 
+      console.log("DATA PROVINCE: ", response.data.data);
       res.status(200).send(response.data.data);
     } catch (err) {
       console.error("Error fetching provinces:", err);
@@ -27,7 +28,7 @@ module.exports = {
           headers: { key: process.env.RAJAONGKIR_API_KEY },
         }
       );
-
+      console.log("DATA CITY: ", response.data.data);
       res.status(200).send(response.data.data);
     } catch (err) {
       console.error("Error fetching provinces:", err);
@@ -36,7 +37,7 @@ module.exports = {
   },
 
   getCost: async (req, res) => {
-    const { origin, destination, weight, courier } = req.body;
+    const { origin, destination, weight, courier, service } = req.body;
 
     if (!origin || !destination || !weight || !courier) {
       return res.status(400).json({
@@ -64,7 +65,22 @@ module.exports = {
         }
       );
 
-      res.status(200).send(response.data);
+      console.log("RESPONSE DATA: ", response.data);
+
+      const selectedService = response.data.data.find(
+        (item) => item.service === service
+      );
+
+      if (!selectedService) {
+        return null;
+      }
+
+      res.status(200).json({
+        courier: selectedService.name,
+        service: selectedService.service,
+        cost: selectedService.cost,
+        etd: selectedService.etd,
+      });
     } catch (err) {
       console.error("Error fetching cost:", err.response?.data || err.message);
       res.status(500).send("Internal server error");

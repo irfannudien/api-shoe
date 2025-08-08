@@ -1,7 +1,7 @@
 const { runQuery } = require("../../utils");
 
 module.exports = {
-  handleMidtransWebhook: async (req, res) => {
+  handleMidtrans: async (req, res) => {
     const notification = req.body;
 
     console.log("MIDTRANS NOTIFICATION", notification);
@@ -17,15 +17,20 @@ module.exports = {
       let newStatus;
       switch (transaction_status) {
         case "settlement":
-          newStatus = "Payment Success";
+          newStatus = "paid";
           break;
         case "pending":
-          newStatus = "Payment Pending";
+          newStatus = "pending";
+          break;
+        case "cancel":
+          newStatus = "canceled";
+          break;
+        case "expire":
+          newStatus = "expired";
           break;
         case "deny":
-        case "expire":
-        case "cancel":
-          newStatus = "Payment Failed";
+        case "failure":
+          newStatus = "failed";
           break;
         default:
           newStatus = "Unknown";
@@ -55,7 +60,7 @@ module.exports = {
       // ========= UPDATE TRANSACTIONS =========
       const updateTransaction = `
         UPDATE transactions
-        SET status = ?, payment_type = ?,  payment_method = ?, transaction_id = ?, amount = ?
+        SET status = ?, payment_type = ?, payment_method = ?, transaction_id = ?, amount = ?
         WHERE order_id = ?`;
       const transactionValues = [
         newStatus,
@@ -68,10 +73,10 @@ module.exports = {
 
       await runQuery(updateTransaction, transactionValues);
 
-      return res.status(200).json({ message: "Webhook handled successfully" });
+      return res.status(200).json({ message: "Payment success" });
     } catch (err) {
-      console.error("Webhook error:", err);
-      return res.status(500).json({ message: "Webhook processing failed" });
+      console.error("Payment error:", err);
+      return res.status(500).json({ message: "Payment failed" });
     }
   },
 };

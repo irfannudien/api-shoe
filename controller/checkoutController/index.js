@@ -1,11 +1,11 @@
 const { createTransaction } = require("../../helper/midtrans");
+const getShippingCost = require("../../helper/rajaongkir");
 const { runQuery } = require("../../utils");
-const midtransClient = require("midtrans-client");
 
 module.exports = {
   checkoutOrder: async (req, res) => {
     const date = new Date();
-    const { users_id, coupon_code, payment_gateway, courier, shipping_cost } =
+    const { users_id, coupon_code, payment_gateway, courier, service } =
       req.body;
 
     try {
@@ -119,7 +119,28 @@ module.exports = {
         (sum, item) => sum + item.price * item.quantity,
         0
       );
-      const total_amount = totalProductAmount + Number(shipping_cost);
+      const totalWeight = cartItems.reduce((sum, item) => sum + item.weight, 0);
+
+      const courierService = `${courier}-${service}`;
+
+      // ========= SHIPPING COST =========
+      const shippingCost = await getShippingCost({
+        origin: "137",
+        userCityName: user.city,
+        weight: totalWeight,
+        courier,
+        service,
+      });
+
+      console.log("SHIPPING COST: ", shippingCost);
+      if (!shippingCost) {
+        await runQuery("ROLLBACK");
+        return res
+          .status(500)
+          .json({ message: "Failed to fetch shipping cost" });
+      }
+
+      const total_amount = totalProductAmount + Number(shippingCost.cost);
 
       // ========= INSERT INTO ORDERS =========
       const insertOrder = `
@@ -134,15 +155,15 @@ module.exports = {
         user.email,
         user.phone_number,
         user.address,
-        "Banten",
-        user.city,
+        shippingCost.province,
+        shippingCost.city,
         user.country,
         user.zip_code,
         total_amount,
         coupon_code,
         payment_gateway,
-        courier,
-        shipping_cost,
+        courierService,
+        shippingCost.cost,
         date,
         date,
       ];
@@ -238,9 +259,11 @@ module.exports = {
       const midtransResponse = await createTransaction({
         order_id,
         cartItems,
-        shipping_cost,
+        shippingCost,
         user,
       });
+
+      console.log("MIDTRANS RESPONSE: ", midtransResponse);
 
       // ========= INSERT TRANSACTIONS =========
       const insertTransaction = `
