@@ -8,29 +8,32 @@ const getProvinceByCityName = async (cityName) => {
         headers: { key: process.env.RAJAONGKIR_API_KEY },
       }
     );
-
+    console.log("PROVICE RESPONSE: ", provinceRes.data);
     const provinces = provinceRes.data.data;
 
-    const cityRequests = await Promise.all(
+    const cityReq = await Promise.all(
       provinces.map(async (prov) => {
         try {
+          // ========= GET ALL CITY SUITABLE PROVINCE =========
           const cityRes = await axios.get(
             `https://rajaongkir.komerce.id/api/v1/destination/city/${prov.id}`,
             {
               headers: { key: process.env.RAJAONGKIR_API_KEY },
             }
           );
+          console.log("CITY RESPONSE: ", cityRes.data);
 
-          const foundCity = cityRes.data.data.find((c) =>
+          // ========= FIND CITY =========
+          const getCity = cityRes.data.data.find((c) =>
             c.name.toLowerCase().includes(cityName.toLowerCase())
           );
 
-          if (foundCity) {
+          if (getCity) {
             return {
               province: prov.name,
               province_id: prov.id,
-              city: foundCity.name,
-              city_id: foundCity.id,
+              city: getCity.name,
+              city_id: getCity.id,
             };
           }
 
@@ -41,7 +44,9 @@ const getProvinceByCityName = async (cityName) => {
       })
     );
 
-    const result = cityRequests.find((res) => res !== null);
+    console.log("CITY REQUEST: ", cityReq);
+
+    const result = cityReq.find((res) => res !== null);
     return result || null;
   } catch (err) {
     console.error("Error fetching city:", err.message);
@@ -59,6 +64,7 @@ const getShippingCost = async ({
   try {
     const location = await getProvinceByCityName(userCityName);
     if (!location) throw new Error("Province or City not found");
+    console.log("LOCATION: ", location);
 
     const destination = location.city_id;
 
@@ -79,11 +85,12 @@ const getShippingCost = async ({
         },
       }
     );
+    console.log("COST RESPONSE: ", response);
 
+    // ========= FIND COURIER SERVICE =========
     const selectedService = response.data.data.find(
       (item) => item.service === service
     );
-
     if (!selectedService) return null;
 
     return {

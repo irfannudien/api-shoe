@@ -37,6 +37,7 @@ const {
   profileRouter,
   midtransRouter,
   carouselRouter,
+  shippingRouter,
 } = require("./router");
 
 app.use("/api", userRouter);
@@ -49,6 +50,7 @@ app.use("/api", checkoutRouter);
 app.use("/api", profileRouter);
 app.use("/api", midtransRouter);
 app.use("/api", carouselRouter);
+app.use("/api", shippingRouter);
 
 app.get("/", (req, res) => {
   res

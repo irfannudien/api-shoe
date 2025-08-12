@@ -8,6 +8,7 @@ const checkoutController = require("./checkoutController");
 const profileController = require("./profileController");
 const midtransController = require("./midtransController");
 const carouselController = require("./carouselController");
+const shippingController = require("./shippingController");
 
 module.exports = {
   userController,
@@ -20,4 +21,5 @@ module.exports = {
   profileController,
   midtransController,
   carouselController,
+  shippingController,
 };

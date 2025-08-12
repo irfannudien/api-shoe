@@ -18,6 +18,7 @@ module.exports = {
       console.log("CART USER: ", cartUser);
 
       if (cartUser.length === 0) {
+        await runQuery("ROLLBACK");
         return res.status(404).json({ message: "Cart not found" });
       }
 
@@ -45,6 +46,7 @@ module.exports = {
       console.log("CART ITEMS: ", cartItems);
 
       if (cartItems.length === 0) {
+        await runQuery("ROLLBACK");
         return res.status(400).json({ message: "Cart is empty" });
       }
 
@@ -105,10 +107,12 @@ module.exports = {
       const user = userResult[0];
 
       if (!user) {
+        await runQuery("ROLLBACK");
         return res.status(400).json({ message: "User not found" });
       }
 
       if (user.register_status?.toLowerCase() !== "verified") {
+        await runQuery("ROLLBACK");
         return res
           .status(403)
           .json({ message: "Please verify your account before checkout" });
@@ -119,6 +123,7 @@ module.exports = {
         (sum, item) => sum + item.price * item.quantity,
         0
       );
+
       const totalWeight = cartItems.reduce((sum, item) => sum + item.weight, 0);
 
       const courierService = `${courier}-${service}`;
@@ -131,8 +136,8 @@ module.exports = {
         courier,
         service,
       });
-
       console.log("SHIPPING COST: ", shippingCost);
+
       if (!shippingCost) {
         await runQuery("ROLLBACK");
         return res
