@@ -91,7 +91,7 @@ module.exports = {
           ? existingTrackNumber.tracking_number
           : statusLower === "received"
           ? null
-          : `TRK-${date}`;
+          : `TRK-${date.getTime()}`;
 
       console.log("TRACKING NUMBER: ", tracking_number);
 

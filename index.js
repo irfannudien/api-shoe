@@ -33,11 +33,12 @@ const {
   rajaOngkirRouter,
   newsRouter,
   newsletterRouter,
-  checkoutRouter,
+  ordersRouter,
   profileRouter,
   midtransRouter,
   carouselRouter,
   shippingRouter,
+  wishlistRouter,
 } = require("./router");
 
 app.use("/api", userRouter);
@@ -46,11 +47,12 @@ app.use("/api", productRouter);
 app.use("/api", rajaOngkirRouter);
 app.use("/api", newsRouter);
 app.use("/api", newsletterRouter);
-app.use("/api", checkoutRouter);
+app.use("/api", ordersRouter);
 app.use("/api", profileRouter);
 app.use("/api", midtransRouter);
 app.use("/api", carouselRouter);
 app.use("/api", shippingRouter);
+app.use("/api", wishlistRouter);
 
 app.get("/", (req, res) => {
   res

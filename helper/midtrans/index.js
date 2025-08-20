@@ -1,4 +1,5 @@
 const midtransClient = require("midtrans-client");
+const axios = require("axios");
 
 let snap = new midtransClient.Snap({
   isProduction: false,
@@ -59,5 +60,32 @@ const createTransaction = async ({
 
   return snap.createTransaction(parameter);
 };
+
+// const refundTransaction = async (transactionId, amount) => {
+//   try {
+//     const refundKey = `REFUND-${transactionId}-${Date.now()}`;
+//     const serverKey = process.env.MIDTRANS_SERVER_KEY;
+//     const url = `https://api.sandbox.midtrans.com/v2/${transactionId}/refund`;
+
+//     const response = await axios.post(
+//       url,
+//       { refundKey, refund_amount: amount, reason: "User cancel order" },
+//       {
+//         auth: {
+//           username: serverKey,
+//           password: "",
+//         },
+//       }
+//     );
+
+//     return response.data;
+//   } catch (error) {
+//     console.error(
+//       "Midtrans Refund Error:",
+//       error.response?.data || error.message
+//     );
+//     throw new Error("Refund failed");
+//   }
+// };
 
 module.exports = { createTransaction };

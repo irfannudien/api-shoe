@@ -4,11 +4,12 @@ const productRouter = require("./productRouter");
 const rajaOngkirRouter = require("./rajaOngkirRouter");
 const newsRouter = require("./newsRouter");
 const newsletterRouter = require("./newsletterRouter");
-const checkoutRouter = require("./checkoutRouter");
+const ordersRouter = require("./ordersRouter");
 const profileRouter = require("./profileRouter");
 const midtransRouter = require("./midtransRouter");
 const carouselRouter = require("./carouselRouter");
 const shippingRouter = require("./shippingRouter");
+const wishlistRouter = require("./wishlistRouter");
 
 module.exports = {
   userRouter,
@@ -17,9 +18,10 @@ module.exports = {
   rajaOngkirRouter,
   newsRouter,
   newsletterRouter,
-  checkoutRouter,
+  ordersRouter,
   profileRouter,
   midtransRouter,
   carouselRouter,
   shippingRouter,
+  wishlistRouter,
 };

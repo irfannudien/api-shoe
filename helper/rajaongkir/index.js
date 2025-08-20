@@ -8,7 +8,7 @@ const getProvinceByCityName = async (cityName) => {
         headers: { key: process.env.RAJAONGKIR_API_KEY },
       }
     );
-    console.log("PROVICE RESPONSE: ", provinceRes.data);
+    // console.log("PROVICE RESPONSE: ", provinceRes.data);
     const provinces = provinceRes.data.data;
 
     const cityReq = await Promise.all(
@@ -21,7 +21,7 @@ const getProvinceByCityName = async (cityName) => {
               headers: { key: process.env.RAJAONGKIR_API_KEY },
             }
           );
-          console.log("CITY RESPONSE: ", cityRes.data);
+          // console.log("CITY RESPONSE: ", cityRes.data);
 
           // ========= FIND CITY =========
           const getCity = cityRes.data.data.find((c) =>
@@ -44,7 +44,7 @@ const getProvinceByCityName = async (cityName) => {
       })
     );
 
-    console.log("CITY REQUEST: ", cityReq);
+    // console.log("CITY REQUEST: ", cityReq);
 
     const result = cityReq.find((res) => res !== null);
     return result || null;
@@ -85,11 +85,12 @@ const getShippingCost = async ({
         },
       }
     );
-    console.log("COST RESPONSE: ", response);
+    console.log("COST RESPONSE: ", response.data.data);
 
     // ========= FIND COURIER SERVICE =========
     const selectedService = response.data.data.find(
-      (item) => item.service === service
+      (item) =>
+        item.service.toUpperCase().trim() === service.toUpperCase().trim()
     );
     if (!selectedService) return null;
 
@@ -102,7 +103,7 @@ const getShippingCost = async ({
       city: location.city,
     };
   } catch (err) {
-    console.error("Error fetching cost:", err.response?.data || err.message);
+    console.log("Error fetching cost:", err.response?.data || err.message);
     return null;
   }
 };

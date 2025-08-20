@@ -4,11 +4,12 @@ const userController = require("./userController");
 const rajaOngkirController = require("./rajaOngkirController");
 const newsController = require("./newsController");
 const newsLetterController = require("./newsLetterController");
-const checkoutController = require("./checkoutController");
+const ordersController = require("./ordersController");
 const profileController = require("./profileController");
 const midtransController = require("./midtransController");
 const carouselController = require("./carouselController");
 const shippingController = require("./shippingController");
+const wishlistController = require("./wishlistController");
 
 module.exports = {
   userController,
@@ -17,9 +18,10 @@ module.exports = {
   rajaOngkirController,
   newsController,
   newsLetterController,
-  checkoutController,
+  ordersController,
   profileController,
   midtransController,
   carouselController,
   shippingController,
+  wishlistController,
 };

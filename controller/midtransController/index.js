@@ -32,6 +32,9 @@ module.exports = {
         case "failure":
           newStatus = "failed";
           break;
+        case "refund":
+          newStatus = "refunded";
+          break;
         default:
           newStatus = "Unknown";
       }
@@ -73,7 +76,54 @@ module.exports = {
 
       await runQuery(updateTransaction, transactionValues);
 
-      return res.status(200).json({ message: "Payment success" });
+      return res
+        .status(200)
+        .json({ message: "Payment success", status: newStatus });
+
+      //   if (transaction_status === "refund") {
+      //     const shippingQuery = `SELECT * FROM shipping_history WHERE order_id = ? ORDER BY created_at DESC LIMIT 1`;
+      //     const shippingRes = await runQuery(shippingQuery, [updatedOrderId]);
+      //     const shipping = shippingRes[0];
+
+      //     if (shipping && shipping.status.toLowerCase() === "received") {
+      //       const updateShipping = `
+      //   UPDATE shipping_history
+      //   SET status = 'canceled', updated_at = NOW()
+      //   WHERE id = ?
+      // `;
+      //       await runQuery(updateShipping, [shipping.id]);
+      //     }
+
+      //     const orderItemQuery = `SELECT product_id, size, quantity FROM order_items WHERE order_id = ?`;
+      //     const orderItemRes = await runQuery(orderItemQuery, [updatedOrderId]);
+
+      //     if (orderItemRes.length > 0) {
+      //       await Promise.all(
+      //         orderItemRes.map((item) => {
+      //           const updateStock = `UPDATE product_stock SET stock = stock + ? WHERE product_id = ? AND size = ?`;
+      //           return runQuery(updateStock, [
+      //             item.quantity,
+      //             item.product_id,
+      //             item.size,
+      //           ]);
+      //         })
+      //       );
+      //     }
+      //   }
+
+      //   if (transaction_status === "refund") {
+      //     return res.status(200).json({
+      //       message: "Payment refunded",
+      //       status: "refunded",
+      //       order_id: updatedOrderId,
+      //     });
+      //   } else {
+      //     return res.status(200).json({
+      //       message: "Payment success",
+      //       status: newStatus,
+      //       order_id: updatedOrderId,
+      //     });
+      //   }
     } catch (err) {
       console.error("Payment error:", err);
       return res.status(500).json({ message: "Payment failed" });

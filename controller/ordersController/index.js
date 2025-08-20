@@ -1,12 +1,16 @@
-const { createTransaction } = require("../../helper/midtrans");
+const {
+  createTransaction,
+  refundTransaction,
+} = require("../../helper/midtrans");
 const getShippingCost = require("../../helper/rajaongkir");
 const { runQuery } = require("../../utils");
 
 module.exports = {
   checkoutOrder: async (req, res) => {
     const date = new Date();
-    const { users_id, coupon_code, payment_gateway, courier, service } =
-      req.body;
+    let { users_id, coupon_code, payment_gateway, courier, service } = req.body;
+    courier = courier.toLowerCase().trim();
+    service = service.toLowerCase().trim();
 
     try {
       await runQuery("START TRANSACTION");
@@ -130,7 +134,7 @@ module.exports = {
 
       // ========= SHIPPING COST =========
       const shippingCost = await getShippingCost({
-        origin: "137",
+        origin: 137,
         userCityName: user.city,
         weight: totalWeight,
         courier,
@@ -142,7 +146,9 @@ module.exports = {
         await runQuery("ROLLBACK");
         return res
           .status(500)
-          .json({ message: "Failed to fetch shipping cost" });
+          .json({
+            message: `Service "${service}" tidak tersedia untuk courier "${courier}"`,
+          });
       }
 
       const total_amount = totalProductAmount + Number(shippingCost.cost);
