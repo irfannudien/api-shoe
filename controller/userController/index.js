@@ -175,20 +175,55 @@ module.exports = {
     }
   },
 
-  editUserData: (req, res) => {
-    const { id, ...userData } = req.body;
-    userData.updated_at = new Date();
+  editUserData: async (req, res) => {
+    const { id } = req.params;
+    const { updatedUserData = {}, updatedProfileData = {} } = req.body;
 
-    const query = `UPDATE users SET ? WHERE id = ${req.body.id}`;
-    db.query(query, [userData, id], (err, result) => {
-      if (err) {
-        console.log(err);
-        return res.status(500).send("Internal server error");
-      }
-      console.log(result);
-      res.status(200).send(result);
-    });
+    const now = new Date();
+
+    try {
+      await runQuery("UPDATE users SET ? WHERE id = ?", [
+        { ...updatedUserData, updated_at: now },
+        id,
+      ]);
+
+      await runQuery("UPDATE users_profile SET ? WHERE users_id = ?", [
+        { ...updatedProfileData, updated_at: now },
+        id,
+      ]);
+
+      res.status(200).send({
+        message: "User & profile updated successfully",
+        data: {
+          user: updatedUserData,
+          profile: updatedProfileData,
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).send("Internal server error");
+    }
   },
+
+  // editUserProfile: async (req, res) => {
+  //   const { id } = req.params;
+  //   const { ...profileData } = req.body;
+
+  //   profileData.updated_at = new Date();
+
+  //   try {
+  //     await runQuery(`UPDATE users_profile SET ? WHERE users_id = ?`, [
+  //       profileData,
+  //       id,
+  //     ]);
+  //     res
+  //       .status(200)
+  //       .send({ success: true, message: "User profile updated successfully" });
+  //   } catch (err) {
+  //     console.log(err);
+  //     res.status(500).send("Internal server error");
+  //   }
+  // },
 
   deleteUserData: async (req, res) => {
     const id = parseInt(req.params.id);
@@ -308,7 +343,7 @@ module.exports = {
   },
 
   getUserProfileId: (req, res) => {
-    const userId = req.params.userId;
+    const { userId } = req.params;
     const query = `
           SELECT 
             u.id, u.name, u.email, u.register_method, u.register_status, u.created_at,
@@ -319,7 +354,7 @@ module.exports = {
         `;
     db.query(query, [userId], (err, result) => {
       if (err) return res.status(500).send("Internal server error");
-      res.status(200).send(result);
+      res.status(200).send(result[0]);
     });
   },
 };

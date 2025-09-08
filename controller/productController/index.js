@@ -318,6 +318,27 @@ module.exports = {
     }
   },
 
+  getAllProduct: async (req, res) => {
+    const getProduct = `
+    SELECT * FROM product`;
+
+    try {
+      const result = await runQuery(getProduct);
+      console.log("RESULT PRODUCT", result);
+
+      if (result.length === 0) {
+        return res.status(404).json({ message: "No products found" });
+      }
+
+      res
+        .status(200)
+        .json({ message: "Success get product data", data: result });
+    } catch (err) {
+      console.log("Failed get product", err);
+      res.status(500).json({ message: "Failed get product data" });
+    }
+  },
+
   deleteProduct: async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) {

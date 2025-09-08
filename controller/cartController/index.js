@@ -4,7 +4,7 @@ const { runQuery } = require("../../utils");
 
 module.exports = {
   getUserCartId: (req, res) => {
-    const userId = req.params.userId;
+    const { userId } = req.params;
     const query = `
         SELECT 
         u.id AS users_id, u.name, u.email, u.register_method, u.register_status, u.created_at,

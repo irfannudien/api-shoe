@@ -9,7 +9,8 @@ router.get("/user/verify-email", userController.verifyEmail);
 router.post("/user/register", userController.registerUserData);
 router.post("/user/inputuser", userController.inputUserData);
 
-router.put("/user/edituser", userController.editUserData);
+router.put("/user/edituser/:id", userController.editUserData);
+// router.put("/user/edit-user-profile/:id", userController.editUserProfile);
 
 router.delete("/user/deleteuser/:id", userController.deleteUserData);
 
