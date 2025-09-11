@@ -3,6 +3,7 @@ const db = require("../../db");
 const { runQuery } = require("../../utils");
 const transporter = require("../../helper/nodemailer");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 module.exports = {
   registerUserData: async (req, res) => {
@@ -150,37 +151,59 @@ module.exports = {
     try {
       const selectUser = `
       SELECT * FROM users
-      WHERE email = '${email}'
+      WHERE email = ?
       `;
 
       const result = await runQuery(selectUser, [email, password]);
 
       if (result.length === 0) {
-        return res.status(400).json({ message: "User not found" });
+        return res.status(400).json({ message: "Invalid email or password" });
       }
 
       console.log("RESULT LOGIN USER", result);
 
       const userData = result[0];
-      const passUserDB = userData.password;
 
-      console.log("Password User", passUserDB);
+      const isHashed =
+        userData.password.startsWith("$2a$") ||
+        userData.password.startsWith("$2b$");
+      let isMatch = false;
 
-      if (password !== passUserDB) {
-        return res
-          .status(400)
-          .json({ message: "Password doesnt match", status: 400 });
+      if (isHashed) {
+        isMatch = await bcrypt.compare(password, userData.password);
+      } else {
+        isMatch = password === userData.password;
+
+        if (isMatch) {
+          const newHashed = await bcrypt.hash(password, 10);
+          const updatedPassword = `
+          UPDATE users SET password = ?
+          WHERE id = ?`;
+          await runQuery(updatedPassword, [newHashed, userData.id]);
+        }
       }
+
+      if (!isMatch) {
+        return res.status(400).json({ message: "Invalid email or password" });
+      }
+
+      const token = jwt.sign(
+        {
+          id: userData.id,
+          email: userData.email,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+      );
 
       res.status(200).json({
         message: "Login success",
+        token,
         data: [{ name: userData.name, email: userData.email }],
       });
     } catch (err) {
       console.log("Login Error", err);
-      res
-        .status(500)
-        .json({ message: "Login failed, please check your email or password" });
+      res.status(500).json({ message: "Login failed, please try again" });
     }
   },
 
