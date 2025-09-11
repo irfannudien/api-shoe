@@ -144,6 +144,46 @@ module.exports = {
     }
   },
 
+  loginUser: async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+      const selectUser = `
+      SELECT * FROM users
+      WHERE email = '${email}'
+      `;
+
+      const result = await runQuery(selectUser, [email, password]);
+
+      if (result.length === 0) {
+        return res.status(400).json({ message: "User not found" });
+      }
+
+      console.log("RESULT LOGIN USER", result);
+
+      const userData = result[0];
+      const passUserDB = userData.password;
+
+      console.log("Password User", passUserDB);
+
+      if (password !== passUserDB) {
+        return res
+          .status(400)
+          .json({ message: "Password doesnt match", status: 400 });
+      }
+
+      res.status(200).json({
+        message: "Login success",
+        data: [{ name: userData.name, email: userData.email }],
+      });
+    } catch (err) {
+      console.log("Login Error", err);
+      res
+        .status(500)
+        .json({ message: "Login failed, please check your email or password" });
+    }
+  },
+
   getUserData: (req, res) => {
     const query = "SELECT * FROM users";
 

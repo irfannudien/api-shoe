@@ -7,6 +7,7 @@ router.get("/user/profile/:userId", userController.getUserProfileId);
 router.get("/user/verify-email", userController.verifyEmail);
 
 router.post("/user/register", userController.registerUserData);
+router.post("/user/login", userController.loginUser);
 router.post("/user/inputuser", userController.inputUserData);
 
 router.put("/user/edituser/:id", userController.editUserData);
