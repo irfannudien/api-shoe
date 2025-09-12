@@ -146,7 +146,7 @@ module.exports = {
   },
 
   loginUser: async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
 
     try {
       const selectUser = `
@@ -154,7 +154,7 @@ module.exports = {
       WHERE email = ?
       `;
 
-      const result = await runQuery(selectUser, [email, password]);
+      const result = await runQuery(selectUser, [email]);
 
       if (result.length === 0) {
         return res.status(400).json({ message: "Invalid email or password" });
@@ -187,14 +187,18 @@ module.exports = {
         return res.status(400).json({ message: "Invalid email or password" });
       }
 
+      const expires = rememberMe ? "7d" : "1h";
       const token = jwt.sign(
         {
           id: userData.id,
           email: userData.email,
         },
         process.env.JWT_SECRET,
-        { expiresIn: "1h" }
+        { expiresIn: expires }
       );
+
+      console.log("Generate JWT Token", token);
+      console.log("Token will expire in", expires);
 
       res.status(200).json({
         message: "Login success",
