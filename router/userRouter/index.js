@@ -3,7 +3,7 @@ const router = require("express").Router();
 const { userController } = require("../../controller");
 const { authenticateToken } = require("../../helper/auth");
 
-router.get("/user/getuser", authenticateToken, userController.getUserData);
+router.get("/user/getuser", authenticateToken, userController.getUserData); // all user
 router.get(
   "/user/profile/:userId",
   authenticateToken,
@@ -14,7 +14,7 @@ router.get("/user/verify-email", userController.verifyEmail);
 router.post("/user/register", userController.registerUserData);
 router.post("/user/login", userController.loginUser);
 
-router.post("/user/inputuser", authenticateToken, userController.inputUserData);
+// router.post("/user/inputuser", authenticateToken, userController.inputUserData);
 router.put(
   "/user/edituser/:id",
   authenticateToken,

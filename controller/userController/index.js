@@ -8,18 +8,7 @@ const jwt = require("jsonwebtoken");
 module.exports = {
   registerUserData: async (req, res) => {
     const date = new Date();
-    const {
-      name,
-      email,
-      password,
-      register_method,
-      phone_number,
-      address,
-      city,
-      country,
-      zip_code,
-      profile_picture,
-    } = req.body;
+    const { name, email, phone_number, password } = req.body;
 
     // ========= EMAIL VALIDATION =========
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -48,22 +37,22 @@ module.exports = {
         .json({ message: "Phone number must be 8-15 digits" });
     }
     // ========= ZIP CODE VALIDATION =========
-    if (zip_code && !/^\d{3,}$/.test(zip_code)) {
-      return res
-        .status(400)
-        .json({ message: "Zip code must be numeric (min 3 digits)" });
-    }
+    // if (zip_code && !/^\d{3,}$/.test(zip_code)) {
+    //   return res
+    //     .status(400)
+    //     .json({ message: "Zip code must be numeric (min 3 digits)" });
+    // }
 
     try {
       // ======= INSERT USER =======
       const insertUser = `
       INSERT INTO users (name, email, password, register_method, register_status, created_at, updated_at)
-      VALUES (?, ?, ?, ?, 'Unverified', ?, ?)
+      VALUES (?, ?, ?, 'Manual', 'Unverified', ?, ?)
       `;
 
       const hashPassword = await bcrypt.hash(password, 10);
 
-      const userData = [name, email, hashPassword, register_method, date, date];
+      const userData = [name, email, hashPassword, date, date];
 
       const userResult = await runQuery(insertUser, userData);
       console.log("Insert Result: ", userResult);
@@ -71,20 +60,10 @@ module.exports = {
 
       // ======= INSERT PROFILE =======
       const insertProfile = `
-      INSERT INTO users_profile (users_id, phone_number, address, city, country, zip_code, profile_picture, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      INSERT INTO users_profile (users_id, phone_number, created_at, updated_at)
+      VALUES (?, ?, ?, ?)`;
 
-      const profileData = [
-        userId,
-        phone_number,
-        address,
-        city,
-        country,
-        zip_code,
-        profile_picture || null,
-        date,
-        date,
-      ];
+      const profileData = [userId, phone_number, date, date];
 
       const profileResult = await runQuery(insertProfile, profileData);
       console.log("Profile Result: ", profileResult);
