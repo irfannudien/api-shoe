@@ -1,5 +1,12 @@
 const jwt = require("jsonwebtoken");
 
+const generateToken = (payload, expiresIn = "1h") => {
+  const options = expiresIn === "never" ? {} : { expiresIn };
+  const token = jwt.sign(payload, process.env.JWT_SECRET, options);
+
+  return { token, expiresIn };
+};
+
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader?.split(" ")[1];
@@ -18,4 +25,4 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
-module.exports = { authenticateToken };
+module.exports = { generateToken, authenticateToken };

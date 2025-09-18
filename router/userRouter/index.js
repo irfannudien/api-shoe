@@ -10,9 +10,10 @@ router.get(
   userController.getUserProfileId
 );
 
-router.get("/user/verify-email", userController.verifyEmail);
-router.post("/user/register", userController.registerUserData);
-router.post("/user/login", userController.loginUser);
+router.post("/auth/verify-email", userController.verifyEmail);
+router.post("/auth/resend-token", userController.resendToken);
+router.post("/auth/register", userController.registerUserData);
+router.post("/auth/login", userController.loginUser);
 
 // router.post("/user/inputuser", authenticateToken, userController.inputUserData);
 router.put(

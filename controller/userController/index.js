@@ -4,6 +4,7 @@ const { runQuery } = require("../../utils");
 const transporter = require("../../helper/nodemailer");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { generateToken } = require("../../helper/auth");
 
 module.exports = {
   registerUserData: async (req, res) => {
@@ -77,6 +78,8 @@ module.exports = {
       const cartResult = await runQuery(insertCart, cartData);
       console.log("Cart Result", cartResult);
 
+      const { token: verifyToken } = generateToken({ id: userId, email }, "1h");
+
       const mailToUser = {
         from: "KC Shoeshop <ridho@coursenese.com>",
         to: email,
@@ -95,7 +98,7 @@ module.exports = {
               <p style="font-size:16px;">
                 To complete your registration, please verify your email address by clicking the button below:
               </p>
-              <a href="http://localhost:2000/api/user/verify-email?email=${email}" 
+              <a href="https://localhost:4000/verify-email?token=${verifyToken}" 
                 style="display:inline-block; margin-top:15px; padding:12px 24px; background-color:#28a745; color:#fff; text-decoration:none; border-radius:5px; font-size:16px;">
                 Verify My Account
               </a>
@@ -114,13 +117,13 @@ module.exports = {
 
       const triggerMail = await transporter.sendMail(mailToUser);
 
-      res.status(200).json({
+      return res.status(200).json({
         message: "Register success",
         email_status: triggerMail.response,
       });
     } catch (err) {
       console.log(err);
-      res.status(500).json({ message: "Internal server error" });
+      return res.status(500).json({ message: "Internal server error" });
     }
   },
 
@@ -166,22 +169,18 @@ module.exports = {
         return res.status(400).json({ message: "Invalid email or password" });
       }
 
-      const expires = rememberMe ? "7d" : "1h";
-      const token = jwt.sign(
-        {
-          id: userData.id,
-          email: userData.email,
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: expires }
+      const { token, expiresIn } = generateToken(
+        { id: userData.id, email: userData.email },
+        rememberMe ? "never" : "1h"
       );
 
       console.log("Generate JWT Token", token);
-      console.log("Token will expire in", expires);
+      console.log("Token will expire in", expiresIn);
 
       res.status(200).json({
         message: "Login success",
         token,
+        expiresIn,
         data: [{ name: userData.name, email: userData.email }],
       });
     } catch (err) {
@@ -324,42 +323,124 @@ module.exports = {
   },
 
   verifyEmail: async (req, res) => {
-    const { email } = req.query;
+    const { token } = req.query;
+
+    console.log("TOKEN FROM BE", token);
+
+    if (!token) {
+      return res.status(400).json({ message: "Token is required" });
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const { id } = decoded;
+
+      // ========= CHECK EMAIL USER =========
+      const checkUser = `
+      SELECT id, email, register_status
+      FROM users
+      WHERE id = ?`;
+
+      const userResult = await runQuery(checkUser, [id]);
+      const user = userResult[0];
+
+      if (userResult.length === 0) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (userResult[0].register_status === "Verified") {
+        return res.status(400).json({ message: "Email already verified" });
+      }
+
+      // ========= UPDATE USER STATUS =========
+      const updateUserStatus = `
+        UPDATE users
+        SET register_status = 'Verified'
+        WHERE id = ? AND register_status = 'Unverified'
+      `;
+
+      await runQuery(updateUserStatus, [id]);
+
+      return res.status(200).json({
+        success: true,
+        message: "Email verified successfully",
+        email: user.email,
+      });
+    } catch (err) {
+      console.error("Verify Email Error:", err);
+      if (err.name === "TokenExpiredError") {
+        return res.status(400).json({ message: "Verification link expired" });
+      }
+      if (err.name === "JsonWebTokenError") {
+        return res.status(400).json({ message: "Invalid token" });
+      }
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  },
+
+  resendToken: async (req, res) => {
+    console.log("REQ BODY RESEND", req.body);
+    const { email } = req.body;
+
+    console.log("🔥 BE - req.body:", req.body); // <--- log isi body
+    console.log("🔥 BE - email:", email); // <--- log emailnya
 
     if (!email) {
       return res.status(400).json({ message: "Email is required" });
     }
 
     try {
-      // ========= CHECK EMAIL USER =========
-      const checkEmail = `
-      SELECT *
+      const selectUser = `
+      SELECT id, register_status
       FROM users
       WHERE email = ?`;
 
-      const emailResult = await runQuery(checkEmail, [email]);
+      const result = await runQuery(selectUser, [email]);
+      console.log("🔥 BE - query result:", result);
 
-      if (emailResult.length === 0) {
-        res.status(400).json({ message: "Email not found" });
+      const user = result[0];
+      console.log("🔥 BE - user:", user);
+
+      if (!user) {
+        return res.status(400).json({ message: "User not found" });
       }
 
-      if (emailResult[0].register_status === "Verified") {
-        res.status(400).json({ message: "Email already verified" });
+      if (user.register_status === "Verified") {
+        return res.status(400).json({ message: "Email already verified" });
       }
 
-      // ========= UPDATE USER STATUS =========
-      const updateUserStatus = `
-      UPDATE users
-      SET register_status = 'Verified'
-      WHERE email = ? AND register_status = 'Unverified'
-      `;
+      const { token: resendToken } = generateToken(
+        { id: user.id, email },
+        "1h"
+      );
 
-      await runQuery(updateUserStatus, [email]);
+      console.log("🔥 BE - resendToken:", resendToken);
 
-      res.status(200).json({ message: "Email verified successfully" });
+      const mailToUser = {
+        from: "KC Shoeshop <ridho@coursenese.com>",
+        to: email,
+        subject: "KC Shoeshop - Please verify your email",
+        html: `
+          <p>Hi ${email},</p>
+          <p>You requested a new verification link.</p>
+          <p>Click the link below to verify your account:</p>
+          <a href="https://localhost:4000/verify-email?token=${resendToken}">
+            Verify My Account
+          </a>
+          <p>If you didn’t request this, you can ignore the email.</p>
+        `,
+      };
+
+      const triggerMail = await transporter.sendMail(mailToUser);
+
+      return res.status(200).json({
+        success: true,
+        message: "Email verification sent",
+        email_status: triggerMail.response,
+      });
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: "Internal server error" });
+      console.log("ERROR RESEND TOKEN", err);
+      return res.status(500).json({ message: "Internal server error" });
     }
   },
 
